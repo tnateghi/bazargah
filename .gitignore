@@ -1,0 +1,61 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local runtime / secrets / browser session / queue DB
+/data/*
+!/data/.gitkeep
+
+# Captured network sessions (may include cookies)
+/captures/
+*.har
+*.jsonl
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+credentials.json
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs / temp
+*.log
+*.tmp
+*.temp
+.cache/
+
+# Playwright
+playwright-report/
+test-results/
+
+# Local DBs
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Local excel dumps (not source)
+*.xlsx
+*.xls

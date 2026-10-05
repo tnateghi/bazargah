@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>پنل درج زیرمجموعه</title>
+  <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>پنل درج زیرمجموعه</h1>
+        <p class="sub">ترتیب لیست = همان ترتیب اکسل گزارش سایت · لاگین دستی به‌خاطر کپچا</p>
+      </div>
+      <div class="actions">
+        <form method="post" action="/reset-failed">
+          <button type="submit" class="btn ghost">ریست ناموفق‌ها</button>
+        </form>
+      </div>
+    </header>
+
+    {% if msg %}
+    <div class="toast">{{ msg }}</div>
+    {% endif %}
+
+    <section class="how">
+      <strong>نحوه اجرا:</strong>
+      مرورگر باز می‌شود. اگر یوزر/پسورد ذخیره کرده باشی خودکار پر می‌شود؛ فقط کپچا را بزن.
+      توجه: سایت بین بعضی ساعات (مثلاً ۱۴ تا ۱۵) افزودن زیرمجموعه را قفل می‌کند.
+    </section>
+
+    <section class="panel">
+      <h2>ورود سایت (یوزر / پسورد)</h2>
+      <form method="post" action="/credentials" class="creds-form">
+        <label class="field">
+          نام کاربری
+          <input name="username" value="{{ creds.username }}" autocomplete="username" />
+        </label>
+        <label class="field">
+          رمز عبور
+          <input name="password" type="password" value="{{ creds.password }}" autocomplete="current-password" />
+        </label>
+        <button class="btn" type="submit">ذخیره</button>
+      </form>
+      <p class="hint">فقط روی همین سیستم ذخیره می‌شود. کپچا را هر بار باید خودت بزنی.</p>
+    </section>
+
+    <section class="cards">
+      <div class="card"><div class="label">کل</div><div class="value">{{ stats.total }}</div></div>
+      <div class="card pending"><div class="label">مانده</div><div class="value">{{ stats.pending }}</div></div>
+      <div class="card done"><div class="label">انجام‌شده</div><div class="value">{{ stats.done }}</div></div>
+      <div class="card nochange"><div class="label">بدون تغییر</div><div class="value">{{ stats.nochange }}</div></div>
+      <div class="card failed"><div class="label">ناموفق</div><div class="value">{{ stats.failed }}</div></div>
+      <div class="card running"><div class="label">در حال اجرا</div><div class="value">{{ stats.running }}</div></div>
+    </section>
+
+    <section class="progress-box">
+      <div class="progress-top"><span>پیشرفت</span><strong>{{ progress_pct }}%</strong></div>
+      <div class="bar"><div class="fill" style="width: {{ progress_pct }}%"></div></div>
+    </section>
+
+    <section class="panel load-panel">
+      <h2>بارگذاری اکسل‌ها</h2>
+      <form method="post" action="/load" enctype="multipart/form-data" class="load-form" id="loadForm">
+        <div class="file-grid">
+          <label class="file-card" id="statsCard">
+            <input type="file" name="stats_file" id="statsFile" accept=".xlsx,.xls" required />
+            <div class="file-icon">xlsx</div>
+            <div class="file-title">فایل آمار جدید</div>
+            <div class="file-desc">فایل آمار شرکت / تعداد دام</div>
+            <div class="file-name" id="statsName">برای انتخاب کلیک کنید</div>
+          </label>
+
+          <label class="file-card" id="reportCard">
+            <input type="file" name="report_file" id="reportFile" accept=".xls,.xlsx,.html" required />
+            <div class="file-icon">xls</div>
+            <div class="file-title">گزارش سایت</div>
+            <div class="file-desc">خروجی ZirMajmoeReport</div>
+            <div class="file-name" id="reportName">برای انتخاب کلیک کنید</div>
+          </label>
+        </div>
+
+        <label class="field">
+          نوع فعالیت
+          <input name="activity" value="دام سبك و سنگین روستایی عشایری" />
+        </label>
+
+        <button class="btn" type="submit">ساخت / بروزرسانی صف</button>
+      </form>
+      <p class="hint">اگر عدد دام در گزارش سایت با آمار یکی باشد، خودکار «انجام‌شده» می‌شود تا دوباره ارسال نشود.</p>
+    </section>
+
+    <section class="panel">
+      <form method="get" class="filters" id="filterForm">
+        <input name="q" placeholder="جستجو شناسه / نام / کد تفصیلی" value="{{ q }}" />
+        <select name="status" class="select">
+          <option value="" {% if not status %}selected{% endif %}>همه وضعیت‌ها</option>
+          <option value="pending" {% if status=='pending' %}selected{% endif %}>مانده</option>
+          <option value="done" {% if status=='done' %}selected{% endif %}>انجام‌شده</option>
+          <option value="nochange" {% if status=='nochange' %}selected{% endif %}>بدون تغییر</option>
+          <option value="failed" {% if status=='failed' %}selected{% endif %}>ناموفق</option>
+          <option value="running" {% if status=='running' %}selected{% endif %}>در حال اجرا</option>
+        </select>
+        <select name="changed" class="select">
+          <option value="" {% if not changed %}selected{% endif %}>همه تغییرات</option>
+          <option value="1" {% if changed=='1' %}selected{% endif %}>فقط نیاز به تغییر</option>
+          <option value="0" {% if changed=='0' %}selected{% endif %}>بدون تغییر</option>
+        </select>
+        <input type="hidden" name="page_size" value="{{ page_size }}" />
+        <input type="hidden" name="page" value="1" />
+        <button class="btn ghost" type="submit">فیلتر</button>
+      </form>
+
+      <div class="list-meta">
+        <div class="pager-info">
+          نمایش {{ page_from }} تا {{ page_to }} از {{ filtered_total }}
+          · صفحه {{ page }} از {{ total_pages }}
+        </div>
+        <div class="page-size" role="group" aria-label="تعداد در صفحه">
+          <span class="page-size-title">تعداد در صفحه</span>
+          <div class="page-size-seg">
+            {% for n in page_size_options %}
+            <a
+              class="page-size-opt{% if page_size == n %} active{% endif %}"
+              href="/?page=1&page_size={{ n }}&status={{ status }}&q={{ q }}&changed={{ changed }}"
+            >{{ n }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <form method="post" action="/run" id="bulkForm">
+        <div class="bulk-bar">
+          <div class="bulk-right">
+            <label class="check-all">
+              <input type="checkbox" id="checkAll" />
+              <span>انتخاب همه این صفحه</span>
+            </label>
+            <div class="selected-pill" id="selectedPill">
+              <span class="selected-label">انتخاب‌شده</span>
+              <strong id="selectedCount">0</strong>
+            </div>
+          </div>
+          <div class="bulk-left">
+            <button class="btn btn-run" name="mode" value="run" type="submit" id="btnRun" disabled>اجرای انتخاب‌شده‌ها</button>
+            <button class="btn ghost btn-mark" name="mode" value="mark_done" type="submit" id="btnMark" disabled>علامت انجام‌شده</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th class="num">#</th>
+                <th class="num">کد تفصیلی</th>
+                <th>وضعیت</th>
+                <th class="num">شناسه یکتا</th>
+                <th>نام</th>
+                <th class="num">دام سبک</th>
+                <th class="num">دام سنگین</th>
+                <th class="num">تغییر؟</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in rows %}
+              <tr class="st-{{ r.status }}">
+                <td>
+                  {% if r.status != 'done' and r.status != 'nochange' %}
+                  <input type="checkbox" name="selected" value="{{ r.shenase }}" class="row-check" />
+                  {% endif %}
+                </td>
+                <td class="mono num">{{ r.sort_order }}</td>
+                <td class="mono num">{{ r.tafsili_code or '—' }}</td>
+                <td>
+                  {% if r.status == 'pending' %}
+                  <span class="badge pending">مانده</span>
+                  {% elif r.status == 'done' %}
+                  <span class="badge done">انجام‌شده</span>
+                  {% elif r.status == 'nochange' %}
+                  <span class="badge nochange">بدون تغییر</span>
+                  {% elif r.status == 'failed' %}
+                  <span class="badge failed">ناموفق</span>
+                  {% elif r.status == 'running' %}
+                  <span class="badge running">در حال اجرا</span>
+                  {% else %}
+                  <span class="badge">{{ r.status }}</span>
+                  {% endif %}
+                </td>
+                <td class="mono num">{{ r.shenase }}</td>
+                <td>{{ r.name }}</td>
+                <td class="num">
+                  <div class="stat-cell">
+                    <span class="stat-old">قدیم {{ r.old_light }}</span>
+                    <span class="stat-new">{{ r.light_count }}</span>
+                  </div>
+                </td>
+                <td class="num">
+                  <div class="stat-cell">
+                    <span class="stat-old">قدیم {{ r.old_heavy }}</span>
+                    <span class="stat-new">{{ r.heavy_count }}</span>
+                  </div>
+                </td>
+                <td class="num">{% if r.changed %}<span class="changed-yes">بله</span>{% else %}<span class="changed-no">خیر</span>{% endif %}</td>
+                <td>
+                  <div class="actions">
+                    {% if r.status not in ['done', 'nochange'] %}
+                    <button class="act act-test" form="test-{{ r.shenase }}" formaction="/test-one" formmethod="post" type="submit">تست</button>
+                    <button class="act act-done" form="done-{{ r.shenase }}" formaction="/mark" formmethod="post" type="submit">انجام‌شده</button>
+                    {% endif %}
+                    {% if r.status not in ['pending', 'nochange'] %}
+                    <button class="act act-pending" form="pending-{{ r.shenase }}" formaction="/mark" formmethod="post" type="submit">مانده</button>
+                    {% endif %}
+                    {% if r.status == 'nochange' %}
+                    <span class="act-muted">نیازی به ارسال نیست</span>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </form>
+
+      <nav class="pager">
+        {% if page > 1 %}
+        <a class="btn ghost" href="/?page=1&page_size={{ page_size }}&status={{ status }}&q={{ q }}&changed={{ changed }}">اولی</a>
+        <a class="btn ghost" href="/?page={{ page - 1 }}&page_size={{ page_size }}&status={{ status }}&q={{ q }}&changed={{ changed }}">قبلی</a>
+        {% else %}
+        <span class="btn ghost disabled">اولی</span>
+        <span class="btn ghost disabled">قبلی</span>
+        {% endif %}
+
+        <div class="pager-pages">
+          {% for p in page_numbers %}
+            {% if p == page %}
+            <span class="page-num current">{{ p }}</span>
+            {% else %}
+            <a class="page-num" href="/?page={{ p }}&page_size={{ page_size }}&status={{ status }}&q={{ q }}&changed={{ changed }}">{{ p }}</a>
+            {% endif %}
+          {% endfor %}
+        </div>
+
+        {% if page < total_pages %}
+        <a class="btn ghost" href="/?page={{ page + 1 }}&page_size={{ page_size }}&status={{ status }}&q={{ q }}&changed={{ changed }}">بعدی</a>
+        <a class="btn ghost" href="/?page={{ total_pages }}&page_size={{ page_size }}&status={{ status }}&q={{ q }}&changed={{ changed }}">آخری</a>
+        {% else %}
+        <span class="btn ghost disabled">بعدی</span>
+        <span class="btn ghost disabled">آخری</span>
+        {% endif %}
+      </nav>
+
+      {% for r in rows %}
+      <form id="test-{{ r.shenase }}" class="hidden-form">
+        <input type="hidden" name="shenase" value="{{ r.shenase }}" />
+      </form>
+      <form id="done-{{ r.shenase }}" class="hidden-form">
+        <input type="hidden" name="shenase" value="{{ r.shenase }}" />
+        <input type="hidden" name="status" value="done" />
+      </form>
+      <form id="pending-{{ r.shenase }}" class="hidden-form">
+        <input type="hidden" name="shenase" value="{{ r.shenase }}" />
+        <input type="hidden" name="status" value="pending" />
+      </form>
+      {% endfor %}
+    </section>
+
+    <section class="panel">
+      <div class="log-head">
+        <h2>لاگ ورکر</h2>
+        <form method="post" action="/clear-log">
+          <button class="btn ghost" type="submit">پاک کردن لاگ</button>
+        </form>
+      </div>
+      <pre id="workerLog" class="log"></pre>
+    </section>
+  </div>
+
+  <script>
+    function bindFile(inputId, nameId, cardId) {
+      const input = document.getElementById(inputId);
+      const name = document.getElementById(nameId);
+      const card = document.getElementById(cardId);
+      if (!input) return;
+      input.addEventListener('change', () => {
+        if (input.files && input.files[0]) {
+          name.textContent = input.files[0].name;
+          card.classList.add('has-file');
+        } else {
+          name.textContent = 'برای انتخاب کلیک کنید';
+          card.classList.remove('has-file');
+        }
+      });
+    }
+    bindFile('statsFile', 'statsName', 'statsCard');
+    bindFile('reportFile', 'reportName', 'reportCard');
+
+    function updateSelectedCount() {
+      const checks = [...document.querySelectorAll('.row-check')];
+      const count = checks.filter(c => c.checked).length;
+      const el = document.getElementById('selectedCount');
+      const pill = document.getElementById('selectedPill');
+      const btnRun = document.getElementById('btnRun');
+      const btnMark = document.getElementById('btnMark');
+      const checkAll = document.getElementById('checkAll');
+      if (el) el.textContent = String(count);
+      if (pill) pill.classList.toggle('active', count > 0);
+      if (btnRun) btnRun.disabled = count === 0;
+      if (btnMark) btnMark.disabled = count === 0;
+      if (checkAll && checks.length) {
+        checkAll.checked = count === checks.length;
+        checkAll.indeterminate = count > 0 && count < checks.length;
+      }
+    }
+
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+      checkAll.addEventListener('change', () => {
+        document.querySelectorAll('.row-check').forEach(c => { c.checked = checkAll.checked; });
+        updateSelectedCount();
+      });
+    }
+    document.querySelectorAll('.row-check').forEach(c => {
+      c.addEventListener('change', updateSelectedCount);
+    });
+    updateSelectedCount();
+
+    async function refreshLog() {
+      try {
+        const j = await fetch('/api/worker-log').then(r => r.json());
+        const el = document.getElementById('workerLog');
+        if (el) el.textContent = j.text || '';
+      } catch (_) {}
+    }
+    refreshLog();
+    setInterval(refreshLog, 3000);
+  </script>
+</body>
+</html>
