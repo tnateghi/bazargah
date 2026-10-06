@@ -27,10 +27,11 @@ TARGET_URL = "https://sps.bki.ir/Pages/AddZirMajmooeKhodEzhari.aspx"
 ACTIVITY_VALUE = "1114"
 MAJMOE_VALUE = "1"
 
-DELAY_AFTER_SUSPEND = 5.0
-DELAY_BETWEEN_RECORDS = 4.0
-DELAY_AFTER_MAJMOE = 2.0
-DELAY_BEFORE_INSERT = 1.5
+DELAY_AFTER_SUSPEND = 7.0
+DELAY_BETWEEN_RECORDS = 6.0
+DELAY_AFTER_MAJMOE = 4.0
+DELAY_AFTER_ACTIVITY = 2.0
+DELAY_BEFORE_INSERT = 3.5
 
 ID = {
     "text_part": "#ctl00_ContentPlaceHolder1_TextpartId",
@@ -366,7 +367,7 @@ def click_suspend_if_exists(page) -> bool:
 def search_person(page, shenase: str) -> None:
     fill(page, ID["text_part"], shenase)
     click(page, ID["btn_search"])
-    wait_idle(page, 1500)
+    wait_idle(page, 3000)
 
 
 def suspend_with_retry(page, shenase: str, tries: int = 3) -> bool:
@@ -378,7 +379,7 @@ def suspend_with_retry(page, shenase: str, tries: int = 3) -> bool:
                 print(f"  تعلیق: دکمه پیدا نشد (تلاش {attempt}/{tries})")
             else:
                 print(f"  تعلیق: هنوز پیدا نشد (تلاش {attempt}/{tries})")
-            pause(2.0, "قبل از تلاش مجدد تعلیق")
+            pause(4.0, "قبل از تلاش مجدد تعلیق")
             continue
 
         print(f"  تعلیق: کلیک شد (تلاش {attempt})")
@@ -399,7 +400,7 @@ def suspend_with_retry(page, shenase: str, tries: int = 3) -> bool:
             print("  تعلیق: تأیید شد (دیگر در لیست نیست)")
             return True
         print("  تعلیق: هنوز در لیست است؛ تکرار می‌شود")
-        pause(2.5)
+        pause(4.5)
     return False
 
 
@@ -444,7 +445,7 @@ def process_one(page, rec: dict) -> None:
         print("  تعلیق: نهایی شد")
     else:
         print("  تعلیق: در لیست پیدا نشد (شاید از قبل معلق بوده)")
-        pause(2.0, "قبل از افزودن")
+        pause(4.0, "قبل از افزودن")
 
     # 3) majmoe — حتماً قبل از استعلام
     ensure_majmoe(page, force=True)
@@ -486,6 +487,7 @@ def process_one(page, rec: dict) -> None:
         click(page, ID["estelam"])
         name = wait_estelam_ok(page)
     select_value(page, ID["ddl_faaliyat"], ACTIVITY_VALUE)
+    pause(DELAY_AFTER_ACTIVITY, "بعد از انتخاب نوع فعالیت")
 
     # 6) counts + insert
     fill(page, ID["dam_light"], light)
@@ -493,14 +495,22 @@ def process_one(page, rec: dict) -> None:
 
     pause(DELAY_BEFORE_INSERT, "قبل از ذخیره")
     click(page, ID["insert_btn"])
-    wait_idle(page, 1200)
+    wait_idle(page, 2500)
 
     # فقط با دیدن پیام سبز موفقیت، done می‌شود
-    success_msg = confirm_insert_success(page, timeout_sec=12.0)
+    success_msg = confirm_insert_success(page, timeout_sec=14.0)
     set_status(shenase, "done", None)
     print(f"  ✓ انجام شد | {success_msg}")
-    # کمی نگه دار تا پیام سبز معلوم بماند
-    pause(1.5, "بعد از موفقیت")
+    pause(3.0, "بعد از موفقیت")
+
+
+def reload_form(page) -> None:
+    """Fresh page so the next record does not inherit a stuck form."""
+    print("  رفرش صفحه")
+    page.goto(TARGET_URL, wait_until="domcontentloaded")
+    wait_idle(page, 2500)
+    if "Login.aspx" in page.url:
+        ensure_logged_in(page)
 
 
 def run(shenases: list[str] | None = None) -> None:
@@ -538,13 +548,11 @@ def run(shenases: list[str] | None = None) -> None:
                 except Exception as e:
                     set_status(rec["shenase"], "failed", str(e)[:500])
                     print(f"  ✗ خطا: {e}")
+                if i < len(records) - 1:
                     try:
-                        page.goto(TARGET_URL, wait_until="domcontentloaded")
-                        wait_idle(page, 1200)
-                        if "Login.aspx" in page.url:
-                            ensure_logged_in(page)
-                    except Exception:
-                        pass
+                        reload_form(page)
+                    except Exception as e:
+                        print(f"  رفرش ناموفق: {e}")
             print("\nتمام شد.")
             pause(2.0)
         finally:

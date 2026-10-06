@@ -252,6 +252,25 @@
         <span class="btn ghost disabled">بعدی</span>
         <span class="btn ghost disabled">آخری</span>
         {% endif %}
+
+        <form method="get" class="pager-goto" action="/">
+          <input type="hidden" name="page_size" value="{{ page_size }}" />
+          <input type="hidden" name="status" value="{{ status }}" />
+          <input type="hidden" name="q" value="{{ q }}" />
+          <input type="hidden" name="changed" value="{{ changed }}" />
+          <label for="gotoPage">برو به</label>
+          <input
+            id="gotoPage"
+            class="pager-goto-input"
+            type="number"
+            name="page"
+            min="1"
+            max="{{ total_pages }}"
+            value="{{ page }}"
+            inputmode="numeric"
+          />
+          <button class="btn ghost" type="submit">برو</button>
+        </form>
       </nav>
 
       {% for r in rows %}

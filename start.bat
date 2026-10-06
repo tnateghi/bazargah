@@ -34,19 +34,15 @@ if not defined PY (
   exit /b 1
 )
 
+echo Stopping old panel on port 8787 (if any)...
+powershell -NoProfile -Command ^
+  "Get-NetTCPConnection -LocalPort 8787 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }; Get-CimInstance Win32_Process -Filter \"name='python.exe' OR name='pythonw.exe'\" -ErrorAction SilentlyContinue | Where-Object { $_.CommandLine -like '*app.py*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
+timeout /t 1 /nobreak >nul
+
 echo Using: %PY%
 echo Panel: http://127.0.0.1:8787
-echo Stop: Ctrl+C
+echo Stop: Ctrl+C   or run stop.bat
 echo.
-
-rem If port already open, just open browser and exit
-powershell -NoProfile -Command "try { $c = Get-NetTCPConnection -LocalPort 8787 -State Listen -ErrorAction Stop; if ($c) { exit 0 } else { exit 1 } } catch { exit 1 }" >nul 2>&1
-if not errorlevel 1 (
-  echo Port 8787 already in use — opening existing panel.
-  start "" "http://127.0.0.1:8787"
-  pause
-  exit /b 0
-)
 
 start "" cmd /c "timeout /t 3 /nobreak >nul & start http://127.0.0.1:8787"
 

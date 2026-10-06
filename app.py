@@ -24,7 +24,7 @@ from db import (
 )
 from prepare_queue import build_queue
 
-PAGE_SIZE_OPTIONS = (20, 50, 100, 200)
+PAGE_SIZE_OPTIONS = (10, 20, 50, 100, 200)
 DEFAULT_PAGE_SIZE = 20
 BASE = Path(__file__).parent
 UPLOAD_DIR = BASE / "data" / "uploads"
